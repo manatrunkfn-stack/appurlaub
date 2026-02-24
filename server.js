@@ -6,6 +6,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Database = require('better-sqlite3');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = 3000;
@@ -56,6 +57,23 @@ db.exec(`
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Anfragen. Bitte später erneut versuchen.' },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Anfragen. Bitte später erneut versuchen.' },
+});
 
 // Auth middleware
 function requireAuth(req, res, next) {
@@ -128,7 +146,7 @@ function getPosts(filters, userId) {
 }
 
 // ── Auth routes ───────────────────────────────────────────────────────────────
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authLimiter, async (req, res) => {
   const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
@@ -158,7 +176,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'E-Mail und Passwort erforderlich' });
 
@@ -172,7 +190,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ── Post routes ───────────────────────────────────────────────────────────────
-app.get('/api/posts', (req, res) => {
+app.get('/api/posts', apiLimiter, (req, res) => {
   let userId = null;
   const header = req.headers.authorization;
   if (header && header.startsWith('Bearer ')) {
@@ -187,7 +205,7 @@ app.get('/api/posts', (req, res) => {
   res.json(getPosts(filters, userId));
 });
 
-app.post('/api/posts', requireAuth, (req, res) => {
+app.post('/api/posts', apiLimiter, requireAuth, (req, res) => {
   const { title, description, region, location_name, image_url, category } = req.body;
 
   if (!title || !description || !region || !location_name || !category) {
@@ -214,7 +232,7 @@ app.post('/api/posts', requireAuth, (req, res) => {
   res.status(201).json(post);
 });
 
-app.get('/api/posts/:id', (req, res) => {
+app.get('/api/posts/:id', apiLimiter, (req, res) => {
   const post = stmts.getPostById.get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Beitrag nicht gefunden' });
 
@@ -230,7 +248,7 @@ app.get('/api/posts/:id', (req, res) => {
   res.json({ ...post, user_rating: userRating });
 });
 
-app.post('/api/posts/:id/rate', requireAuth, (req, res) => {
+app.post('/api/posts/:id/rate', apiLimiter, requireAuth, (req, res) => {
   const { rating_type } = req.body;
   if (!['BEAUTIFUL', 'DANGEROUS'].includes(rating_type)) {
     return res.status(400).json({ error: 'Ungültiger Bewertungstyp' });
@@ -243,7 +261,7 @@ app.post('/api/posts/:id/rate', requireAuth, (req, res) => {
   res.json({ ...updated, user_rating: rating_type });
 });
 
-app.delete('/api/posts/:id/rate', requireAuth, (req, res) => {
+app.delete('/api/posts/:id/rate', apiLimiter, requireAuth, (req, res) => {
   const post = stmts.getPostById.get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Beitrag nicht gefunden' });
 
@@ -252,7 +270,7 @@ app.delete('/api/posts/:id/rate', requireAuth, (req, res) => {
   res.json({ ...updated, user_rating: null });
 });
 
-app.delete('/api/posts/:id', requireAuth, (req, res) => {
+app.delete('/api/posts/:id', apiLimiter, requireAuth, (req, res) => {
   const post = stmts.getPostById.get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Beitrag nicht gefunden' });
   if (post.user_id !== req.user.id) return res.status(403).json({ error: 'Keine Berechtigung' });
@@ -262,13 +280,13 @@ app.delete('/api/posts/:id', requireAuth, (req, res) => {
 });
 
 // ── Regions ───────────────────────────────────────────────────────────────────
-app.get('/api/regions', (req, res) => {
+app.get('/api/regions', apiLimiter, (req, res) => {
   const rows = stmts.getRegions.all();
   res.json(rows.map(r => r.region));
 });
 
 // ── Catch-all → SPA ───────────────────────────────────────────────────────────
-app.get('*', (req, res) => {
+app.get('*', apiLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
