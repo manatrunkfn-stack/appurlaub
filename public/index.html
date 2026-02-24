@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Appurlaub – Discover Hidden Vacation Spots</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <span class="nav-brand">🌍 Appurlaub</span>
+    <div class="nav-actions" id="nav-actions">
+      <button class="btn btn-outline" id="btn-login">Login</button>
+      <button class="btn btn-primary" id="btn-register">Register</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Main content ===== -->
+<main id="main">
+  <!-- Filter bar -->
+  <div id="filter-bar">
+    <label for="region-filter">Region:</label>
+    <select id="region-filter">
+      <option value="">All Regions</option>
+      <option value="Europe">🇪🇺 Europe</option>
+      <option value="Asia">🌏 Asia</option>
+      <option value="Africa">🌍 Africa</option>
+      <option value="Americas">🌎 Americas</option>
+      <option value="Oceania">🌊 Oceania</option>
+    </select>
+    <div class="sort-group">
+      <label style="margin-right:.3rem">Sort:</label>
+      <button class="btn btn-ghost btn-sm sort-btn active" data-sort="">Latest</button>
+      <button class="btn btn-ghost btn-sm sort-btn" data-sort="beautiful">🌟 Beautiful</button>
+      <button class="btn btn-ghost btn-sm sort-btn" data-sort="dangerous">⚠️ Dangerous</button>
+    </div>
+  </div>
+
+  <!-- Spots grid -->
+  <div id="spots-grid">
+    <div class="loader"><div class="spinner"></div></div>
+  </div>
+</main>
+
+<!-- ===== Login modal ===== -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Login</h2>
+      <button class="modal-close" data-close="modal-login">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="login-alert"></div>
+      <form id="form-login" novalidate>
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input id="login-username" type="text" placeholder="Your username" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" placeholder="Your password" autocomplete="current-password" required />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-close="modal-login">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-login-submit">Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Register modal ===== -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Create Account</h2>
+      <button class="modal-close" data-close="modal-register">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="register-alert"></div>
+      <form id="form-register" novalidate>
+        <div class="form-group">
+          <label for="reg-username">Username <span style="color:var(--muted);font-weight:400">(min 3 chars)</span></label>
+          <input id="reg-username" type="text" placeholder="Choose a username" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password <span style="color:var(--muted);font-weight:400">(min 6 chars)</span></label>
+          <input id="reg-password" type="password" placeholder="Choose a password" autocomplete="new-password" required />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-close="modal-register">Cancel</button>
+          <button type="submit" class="btn btn-primary">Register</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===== New Spot modal ===== -->
+<div class="modal-overlay" id="modal-new-spot">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>Share a Vacation Spot</h2>
+      <button class="modal-close" data-close="modal-new-spot">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="spot-alert"></div>
+      <form id="form-new-spot" novalidate>
+        <div class="form-group">
+          <label for="spot-title">Title *</label>
+          <input id="spot-title" type="text" placeholder="e.g. Hidden Coves of Sardinia" required />
+        </div>
+        <div class="form-group">
+          <label for="spot-location">Location *</label>
+          <input id="spot-location" type="text" placeholder="e.g. Orosei Gulf, Sardinia, Italy" required />
+        </div>
+        <div class="form-group">
+          <label for="spot-region">Region *</label>
+          <select id="spot-region" required>
+            <option value="">Select a region…</option>
+            <option value="Europe">Europe</option>
+            <option value="Asia">Asia</option>
+            <option value="Africa">Africa</option>
+            <option value="Americas">Americas</option>
+            <option value="Oceania">Oceania</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="spot-desc">Description *</label>
+          <textarea id="spot-desc" placeholder="Describe this amazing place…" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="spot-image">Image URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input id="spot-image" type="url" placeholder="https://…" />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" data-close="modal-new-spot">Cancel</button>
+          <button type="submit" class="btn btn-primary">Share Spot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Spot detail modal ===== -->
+<div class="modal-overlay" id="modal-spot-detail">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2 id="detail-title">Spot Details</h2>
+      <button class="modal-close" data-close="modal-spot-detail">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
