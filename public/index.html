@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AppUrlaub – Versteckte Urlaubsorte</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ── Header ── -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo" data-nav="home">
+        <span class="logo-icon">🌍</span>
+        <span>AppUrlaub</span>
+      </a>
+      <nav class="main-nav" id="mainNav">
+        <a href="#" class="nav-link active" data-nav="home">Alle Orte</a>
+        <a href="#" class="nav-link beautiful" data-nav="beautiful">🌿 Schöne Orte</a>
+        <a href="#" class="nav-link dangerous" data-nav="dangerous">⚠️ Gefährliche Orte</a>
+      </nav>
+      <div class="header-actions" id="headerActions">
+        <a href="#" class="btn btn-outline" id="btnLogin">Anmelden</a>
+        <a href="#" class="btn btn-primary" id="btnRegister">Registrieren</a>
+      </div>
+      <div class="user-menu hidden" id="userMenu">
+        <button class="btn btn-success" id="btnNewPost">+ Neuer Ort</button>
+        <span class="username-display" id="usernameDisplay"></span>
+        <button class="btn btn-outline btn-sm" id="btnLogout">Abmelden</button>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Menü">&#9776;</button>
+    </div>
+  </header>
+
+  <!-- ── Hero ── -->
+  <section class="hero" id="heroSection">
+    <div class="container hero-content">
+      <h1>Entdecke versteckte Urlaubsorte</h1>
+      <p>Teile deine geheimen Entdeckungen – wunderschön oder aufregend gefährlich</p>
+      <div class="hero-badges">
+        <span class="badge-beautiful">🌿 Wunderschön</span>
+        <span class="badge-dangerous">⚠️ Gefährlich</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Filters ── -->
+  <div class="filters-bar" id="filtersBar">
+    <div class="container filters-inner">
+      <div class="filter-group">
+        <label for="regionFilter">Region:</label>
+        <select id="regionFilter">
+          <option value="">Alle Regionen</option>
+        </select>
+      </div>
+      <div class="results-count" id="resultsCount"></div>
+    </div>
+  </div>
+
+  <!-- ── Main content ── -->
+  <main class="container main-content" id="mainContent">
+    <div class="posts-grid" id="postsGrid">
+      <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Lade Orte…</p>
+      </div>
+    </div>
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-icon">🗺️</div>
+      <h3>Noch keine Einträge</h3>
+      <p>Sei der Erste und teile deinen geheimen Urlaubsort!</p>
+    </div>
+  </main>
+
+  <!-- ── Toast notifications ── -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ══════════════════════ MODALS ══════════════════════ -->
+
+  <!-- Login Modal -->
+  <div class="modal-overlay hidden" id="loginModal">
+    <div class="modal">
+      <button class="modal-close" data-close="loginModal">&times;</button>
+      <h2>Anmelden</h2>
+      <form id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="loginEmail">E-Mail</label>
+          <input type="email" id="loginEmail" required placeholder="deine@email.de" />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Passwort</label>
+          <input type="password" id="loginPassword" required placeholder="Dein Passwort" />
+        </div>
+        <div class="form-error hidden" id="loginError"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="loginSubmit">Anmelden</button>
+      </form>
+      <p class="modal-footer-text">Noch kein Konto? <a href="#" id="switchToRegister">Jetzt registrieren</a></p>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div class="modal-overlay hidden" id="registerModal">
+    <div class="modal">
+      <button class="modal-close" data-close="registerModal">&times;</button>
+      <h2>Registrieren</h2>
+      <form id="registerForm" novalidate>
+        <div class="form-group">
+          <label for="regUsername">Benutzername</label>
+          <input type="text" id="regUsername" required placeholder="Dein Benutzername" minlength="2" />
+        </div>
+        <div class="form-group">
+          <label for="regEmail">E-Mail</label>
+          <input type="email" id="regEmail" required placeholder="deine@email.de" />
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Passwort</label>
+          <input type="password" id="regPassword" required placeholder="Mindestens 8 Zeichen" minlength="8" />
+          <small class="form-hint">Mindestens 8 Zeichen</small>
+        </div>
+        <div class="form-error hidden" id="registerError"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="registerSubmit">Konto erstellen</button>
+      </form>
+      <p class="modal-footer-text">Bereits registriert? <a href="#" id="switchToLogin">Jetzt anmelden</a></p>
+    </div>
+  </div>
+
+  <!-- New Post Modal -->
+  <div class="modal-overlay hidden" id="newPostModal">
+    <div class="modal modal-large">
+      <button class="modal-close" data-close="newPostModal">&times;</button>
+      <h2>Neuen Ort hinzufügen</h2>
+      <form id="newPostForm" novalidate>
+        <div class="form-row">
+          <div class="form-group form-group-grow">
+            <label for="postTitle">Titel <span class="required">*</span></label>
+            <input type="text" id="postTitle" required placeholder="Name des Ortes" minlength="3" />
+          </div>
+          <div class="form-group form-group-fixed">
+            <label for="postCategory">Kategorie <span class="required">*</span></label>
+            <select id="postCategory" required>
+              <option value="">Wählen…</option>
+              <option value="BEAUTIFUL">🌿 Wunderschön</option>
+              <option value="DANGEROUS">⚠️ Gefährlich</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="postRegion">Region <span class="required">*</span></label>
+            <input type="text" id="postRegion" required placeholder="z.B. Alpen, Nordsee, Südamerika" />
+          </div>
+          <div class="form-group">
+            <label for="postLocation">Ortsname <span class="required">*</span></label>
+            <input type="text" id="postLocation" required placeholder="z.B. Zugspitze, Kap Horn" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="postDescription">Beschreibung <span class="required">*</span></label>
+          <textarea id="postDescription" required rows="4" placeholder="Beschreibe diesen Ort – was macht ihn besonders?" minlength="10"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="postImageUrl">Bild-URL <span class="optional">(optional)</span></label>
+          <input type="url" id="postImageUrl" placeholder="https://beispiel.de/bild.jpg" />
+        </div>
+        <div class="form-error hidden" id="newPostError"></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" data-close="newPostModal">Abbrechen</button>
+          <button type="submit" class="btn btn-primary" id="newPostSubmit">Ort veröffentlichen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Post Detail Modal -->
+  <div class="modal-overlay hidden" id="postDetailModal">
+    <div class="modal modal-large" id="postDetailContent">
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2024 AppUrlaub – Entdecke die versteckten Schätze dieser Welt</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
