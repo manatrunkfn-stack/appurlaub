@@ -4,6 +4,7 @@
 const state = {
   token: localStorage.getItem('token') || null,
   username: localStorage.getItem('username') || null,
+  userId: null,
   region: '',
   sort: '',
 };
@@ -23,9 +24,16 @@ async function api(method, path, body) {
 }
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
+function getUserIdFromToken(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1])).id || null;
+  } catch { return null; }
+}
+
 function saveAuth(token, username) {
   state.token = token;
   state.username = username;
+  state.userId = getUserIdFromToken(token);
   localStorage.setItem('token', token);
   localStorage.setItem('username', username);
 }
@@ -33,6 +41,7 @@ function saveAuth(token, username) {
 function clearAuth() {
   state.token = null;
   state.username = null;
+  state.userId = null;
   localStorage.removeItem('token');
   localStorage.removeItem('username');
 }
@@ -99,7 +108,7 @@ function escHtml(str) {
 
 function spotCardHtml(spot) {
   const img = spot.image_url
-    ? `<img class="spot-card-img" src="${escHtml(spot.image_url)}" alt="${escHtml(spot.title)}" loading="lazy" onerror="this.replaceWith(makePlaceholder())">`
+    ? `<img class="spot-card-img" src="${escHtml(spot.image_url)}" alt="${escHtml(spot.title)}" loading="lazy" data-fallback="1">`
     : `<div class="spot-card-img-placeholder">${regionEmoji(spot.region)}</div>`;
   return `
     <article class="spot-card" data-id="${spot.id}" tabindex="0" role="button" aria-label="View ${escHtml(spot.title)}">
@@ -149,6 +158,9 @@ async function loadSpots() {
       card.addEventListener('click', () => openSpotDetail(card.dataset.id));
       card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openSpotDetail(card.dataset.id); });
     });
+    grid.querySelectorAll('img[data-fallback]').forEach(img => {
+      img.addEventListener('error', () => img.replaceWith(makePlaceholder()), { once: true });
+    });
   } catch (err) {
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon">😕</div><h3>Failed to load spots</h3><p>${escHtml(err.message)}</p></div>`;
   }
@@ -174,7 +186,7 @@ function renderSpotDetail(spot) {
   const isMine = state.username && spot.author === state.username;
 
   const imgHtml = spot.image_url
-    ? `<img class="spot-detail-img" src="${escHtml(spot.image_url)}" alt="${escHtml(spot.title)}" onerror="this.style.display='none'">`
+    ? `<img class="spot-detail-img" src="${escHtml(spot.image_url)}" alt="${escHtml(spot.title)}" data-fallback="1">`
     : '';
 
   let ratingHtml = '';
@@ -210,6 +222,9 @@ function renderSpotDetail(spot) {
     </div>
   `;
 
+  const detailImg = document.querySelector('#detail-body img[data-fallback]');
+  if (detailImg) detailImg.addEventListener('error', () => detailImg.style.display = 'none', { once: true });
+
   if (!state.token) {
     document.getElementById('detail-login-link')?.addEventListener('click', e => {
       e.preventDefault();
@@ -223,6 +238,15 @@ function renderSpotDetail(spot) {
 
 function setupRatingButtons(spot) {
   const btns = document.querySelectorAll('#rating-buttons .btn-rate');
+  // Mark already-cast ratings as active
+  if (state.userId && spot.ratings) {
+    spot.ratings.forEach(r => {
+      if (r.user_id === state.userId) {
+        const btn = document.querySelector(`#rating-buttons .btn-rate[data-type="${r.type}"]`);
+        if (btn) btn.classList.add('active');
+      }
+    });
+  }
   btns.forEach(btn => {
     btn.addEventListener('click', async () => {
       const type = btn.dataset.type;
@@ -345,5 +369,6 @@ document.getElementById('form-new-spot').addEventListener('submit', async e => {
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+if (state.token) state.userId = getUserIdFromToken(state.token);
 renderNav();
 loadSpots();
